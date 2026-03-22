@@ -87,6 +87,37 @@ export function SelectInput({
   );
 }
 
+// ─── MultiSelectInput (checkbox-based multi-select) ──────────────────────────
+
+interface MultiSelectInputProps {
+  options: { value: string; label: string }[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  columns?: number;
+}
+
+export function MultiSelectInput({ options, value, onChange, columns = 2 }: MultiSelectInputProps) {
+  const toggle = (v: string) => {
+    onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  };
+
+  return (
+    <div className={`grid gap-2 ${columns === 3 ? 'grid-cols-3' : columns === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+      {options.map((o) => (
+        <label key={o.value} className="flex items-center gap-2 text-sm text-text cursor-pointer">
+          <input
+            type="checkbox"
+            checked={value.includes(o.value)}
+            onChange={() => toggle(o.value)}
+            className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20"
+          />
+          {o.label}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 // ─── Textarea ─────────────────────────────────────────────────────────────────
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {

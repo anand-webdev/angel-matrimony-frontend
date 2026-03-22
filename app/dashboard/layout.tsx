@@ -17,6 +17,15 @@ const NAV = [
     ),
   },
   {
+    href: '/dashboard/search',
+    label: 'Search',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/matches',
     label: 'Matches',
     icon: (
@@ -70,7 +79,7 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 flex-none flex flex-col h-screen sticky top-0 bg-white border-r border-border">
+    <aside className="w-64 flex-none flex flex-col h-screen sticky top-0 bg-white border-r border-border/60">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-border flex-none">
         <Link href="/dashboard" className="flex items-center gap-2">

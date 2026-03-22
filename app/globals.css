@@ -16,22 +16,33 @@
 
   /* Neutrals */
   --color-background: #FFFFFF;
-  --color-surface: #FAFAFA;
-  --color-border: #E0E0E0;
+  --color-surface: #F7F9FC;
+  --color-surface-warm: #FFF8F9;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
 
   /* Text */
-  --color-text: #1A1A1A;
-  --color-text-secondary: #555555;
-  --color-text-muted: #888888;
+  --color-text: #1A1A2E;
+  --color-text-secondary: #4A5568;
+  --color-text-muted: #94A3B8;
+  --color-text-label: #64748B;
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Status */
+  --color-success: #10B981;
+  --color-info: #3B82F6;
+
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-playfair);
 }
 
 body {
   background: var(--color-background);
   color: var(--color-text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), Georgia, serif;
 }
 
 @keyframes fadeIn {

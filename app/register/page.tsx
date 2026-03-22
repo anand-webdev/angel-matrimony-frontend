@@ -8,31 +8,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '../components/Button';
 import { Field, TextInput, SelectInput, Textarea } from '../components/Input';
 import { useToast } from '../components/Toast';
+import { useLookups } from '../providers/LookupProvider';
+import { lookupOptions } from '../lib/lookups';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
 const GENDERS = ['MALE', 'FEMALE'] as const;
-const RELIGIONS = ['HINDU', 'CHRISTIAN'] as const;
-
-const DENOMINATIONS = [
-  'BORN_AGAIN', 'BRETHREN', 'CHURCH_OF_SOUTH_INDIA', 'EVANGELIST', 'JACOBITE',
-  'KNANAYA', 'KNANAYA_CATHOLIC', 'KNANAYA_JACOBITE', 'LATIN_CATHOLIC', 'MALANKARA',
-  'MARTHOMA', 'PENTECOST', 'ROMAN_CATHOLIC', 'SYRIAN_CATHOLIC', 'SYRIAN_JACOBITE',
-  'SYRIAN_ORTHODOX', 'SYRO_MALABAR', 'CHURCH_OF_NORTH_INDIA', 'ONLY_JESUS',
-  'UNSPECIFIED', 'DO_NOT_WISH_TO_SPECIFY', 'OTHERS',
-] as const;
-
-const LANGUAGES = [
-  'ASSAMESE', 'BENGALI', 'BODO', 'DOGRI', 'GUJARATI', 'HINDI', 'KANNADA',
-  'KASHMIRI', 'KONKANI', 'MAITHILI', 'MALAYALAM', 'MANIPURI', 'MARATHI',
-  'NEPALI', 'ODIA', 'PUNJABI', 'SANSKRIT', 'SANTALI', 'SINDHI', 'TAMIL',
-  'TELUGU', 'URDU', 'AWADHI', 'BHOJPURI', 'CHHATTISGARHI', 'HARYANVI',
-  'RAJASTHANI', 'TULU', 'KODAVA', 'BADAGA', 'BEARY', 'LAMBADI', 'SOURASHTRA',
-  'BHILI', 'GONDI', 'KURUKH', 'MUNDARI', 'KHASI', 'MIZO', 'IRULA', 'TODA',
-  'KOTA', 'OTHERS',
-] as const;
 
 const EDUCATIONS = ["High School", "Diploma", "Bachelor's", "Master's", "PhD", "Other"];
 const ANNUAL_INCOMES = ['Below 2 LPA', '2–5 LPA', '5–10 LPA', '10–20 LPA', '20–50 LPA', '50 LPA+', 'Prefer not to say'];
@@ -138,7 +121,7 @@ const schemas: Yup.ObjectSchema<Partial<FormValues>>[] = [
       .min(18, 'Must be at least 18')
       .max(80, 'Maximum age is 80')
       .required('Age is required'),
-    religion: Yup.string().oneOf([...RELIGIONS], 'Select a religion').required('Religion is required'),
+    religion: Yup.string().required('Religion is required'),
     motherTongue: Yup.string().required('Mother tongue is required'),
   }),
   // Step 3 — all optional
@@ -155,11 +138,6 @@ const STEP_FIELDS: (keyof FormValues)[][] = [
   ['bio'],
   [],
 ];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const fmt = (s: string) =>
-  s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
 
@@ -288,6 +266,18 @@ function Step1({ f }: { f: FormikProps<FormValues> }) {
 // ─── Step 2: Basic Profile ────────────────────────────────────────────────────
 
 function Step2({ f }: { f: FormikProps<FormValues> }) {
+  const lookups = useLookups();
+
+  const denominationOptions = lookupOptions(
+    lookups.denominations.filter((d) => d.religionId === Number(f.values.religion))
+  );
+
+  const handleReligionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    f.handleChange(e);
+    // Clear denomination when religion changes
+    f.setFieldValue('denomination', '');
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -300,7 +290,7 @@ function Step2({ f }: { f: FormikProps<FormValues> }) {
             error={f.errors.gender}
             touched={f.touched.gender}
             placeholder="Select gender"
-            options={GENDERS.map((g) => ({ value: g, label: fmt(g) }))}
+            options={GENDERS.map((g) => ({ value: g, label: g.charAt(0) + g.slice(1).toLowerCase() }))}
           />
         </Field>
 
@@ -324,16 +314,16 @@ function Step2({ f }: { f: FormikProps<FormValues> }) {
         <SelectInput
           name="religion"
           value={f.values.religion}
-          onChange={f.handleChange}
+          onChange={handleReligionChange}
           onBlur={f.handleBlur}
           error={f.errors.religion}
           touched={f.touched.religion}
           placeholder="Select religion"
-          options={RELIGIONS.map((r) => ({ value: r, label: fmt(r) }))}
+          options={lookupOptions(lookups.religions)}
         />
       </Field>
 
-      {f.values.religion === 'CHRISTIAN' && (
+      {denominationOptions.length > 0 && (
         <Field label="Denomination" error={f.errors.denomination} touched={f.touched.denomination}>
           <SelectInput
             name="denomination"
@@ -343,7 +333,7 @@ function Step2({ f }: { f: FormikProps<FormValues> }) {
             error={f.errors.denomination}
             touched={f.touched.denomination}
             placeholder="Select denomination"
-            options={DENOMINATIONS.map((d) => ({ value: d, label: fmt(d) }))}
+            options={denominationOptions}
           />
         </Field>
       )}
@@ -357,7 +347,7 @@ function Step2({ f }: { f: FormikProps<FormValues> }) {
           error={f.errors.motherTongue}
           touched={f.touched.motherTongue}
           placeholder="Select language"
-          options={LANGUAGES.map((l) => ({ value: l, label: fmt(l) }))}
+          options={lookupOptions(lookups.languages)}
         />
       </Field>
 
@@ -723,10 +713,10 @@ export default function RegisterPage() {
       const profile: Record<string, unknown> = {};
       if (profileFields.gender) profile.gender = profileFields.gender;
       if (profileFields.age) profile.age = Number(profileFields.age);
-      if (profileFields.religion) profile.religion = profileFields.religion;
-      if (profileFields.denomination) profile.denomination = profileFields.denomination;
+      if (profileFields.religion) profile.religionId = Number(profileFields.religion);
+      if (profileFields.denomination) profile.denominationId = Number(profileFields.denomination);
       if (profileFields.caste) profile.caste = profileFields.caste;
-      if (profileFields.motherTongue) profile.motherTongue = profileFields.motherTongue;
+      if (profileFields.motherTongue) profile.motherTongueId = Number(profileFields.motherTongue);
       if (profileFields.education) profile.education = profileFields.education;
       if (profileFields.occupation) profile.occupation = profileFields.occupation;
       if (profileFields.annualIncome) profile.annualIncome = profileFields.annualIncome;
